@@ -1,4 +1,4 @@
-"""Initial library data from the problem statement.  OWNER: Person 3 (see tasks/3.md).
+"""Initial library data from the problem statement.  OWNER: Person 3 (see docs/team/3.md).
 
 Preserve the PDF's meaning exactly (business date defaults to 2026-08-01):
 
@@ -17,7 +17,7 @@ two different copies.
 
 Copy codes: CC-1..CC-4, ITA-1..ITA-3, DP-1..DP-2, DSC-1..DSC-5, AIMA-1..AIMA-3.
 
-Users (password via auth.hash_password):
+Users (password via lms.domain.security.hash_password):
   librarian / lib123  LIBRARIAN  "Library Staff"
   asha  / pass123     MEMBER     "Asha Rao"
   ravi  / pass123     MEMBER     "Ravi Kumar"
@@ -29,6 +29,12 @@ Insert them via repo.insert_request + repo.insert_event(actor="seed").
 from __future__ import annotations
 
 import sqlite3
+from datetime import date
+
+from lms.domain.models import CopyStatus, RequestStatus, Role
+from lms.persistence import db
+from lms.persistence import repository as repo
+from lms.domain.security import hash_password
 
 
 def seed(conn: sqlite3.Connection) -> None:
@@ -46,6 +52,7 @@ def ensure_db() -> None:
     raise NotImplementedError
 
 
+# Run from the project root:  python -m lms.persistence.seed
 if __name__ == "__main__":
     reset_db()
     print("Database reset and seeded.")

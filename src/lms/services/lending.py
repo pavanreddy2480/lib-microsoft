@@ -1,4 +1,4 @@
-"""Lending lifecycle - the state machine.  OWNER: Person 4 (see tasks/4.md).
+"""Lending lifecycle - the state machine.  OWNER: Person 4 (see docs/team/4.md).
 
 Rules for EVERY function here:
   * run inside ONE `with db.transaction() as conn:` block (all-or-nothing)
@@ -12,9 +12,20 @@ Rules for EVERY function here:
 """
 from __future__ import annotations
 
+import sqlite3
 from datetime import date
 
-from .models import AffectedRequest, CopyStatus, Request, User
+from lms.domain import errors
+from lms.domain.clock import business_today
+from lms.domain.errors import BusinessRuleError
+from lms.domain.models import (
+    ACTIVE_STATUSES, AffectedRequest, CopyStatus, Event, Request, RequestStatus, Role, User,
+    can_transition,
+)
+from lms.persistence import db
+from lms.persistence import repository as repo
+from lms.services import availability
+from lms.services.auth import require_role
 
 
 def submit_request(actor: User, title_id: int, start: date, end: date) -> Request:
@@ -93,6 +104,6 @@ def _handle_copy_out_of_service(conn, actor: User, copy_id: int) -> list[Affecte
 
 
 # ---------- read helpers for the UI (no transaction needed) ----------
-def get_request_history(request_id: int) -> list:
+def get_request_history(request_id: int) -> list[Event]:
     """repo.list_events for the request (audit trail shown in the UI)."""
     raise NotImplementedError

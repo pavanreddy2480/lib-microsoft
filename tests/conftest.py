@@ -1,17 +1,15 @@
-"""Shared fixtures. OWNER: Person 7 (see tasks/7.md).
+"""Shared fixtures. OWNER: Person 7 (see docs/team/7.md).
 
 Every test gets a fresh, seeded SQLite file in tmp_path and business date 2026-08-01.
 Tests will fail with NotImplementedError until P2/P3/P4 land - that is expected (TDD).
 """
-import sys
 from datetime import date
-from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from lms import clock, db, repo, seed  # noqa: E402
+from lms.domain import clock
+from lms.persistence import db, seed
+from lms.persistence import repository as repo
 
 
 @pytest.fixture(autouse=True)

@@ -1,7 +1,7 @@
 """Shared Streamlit helpers. CONTRACT FILE (owner: Person 1).
 
 Every page starts with:
-    from ui_common import page_setup
+    from lms.ui.common import page_setup
     user = page_setup("Review Queue", Role.LIBRARIAN)   # or Role.MEMBER, or None = any logged-in user
 
 and wraps every service call with run_action(...) so business errors are shown
@@ -13,9 +13,9 @@ from datetime import date
 
 import streamlit as st
 
-from lms import clock
-from lms.errors import BusinessRuleError
-from lms.models import Role, User
+from lms.domain import clock
+from lms.domain.errors import BusinessRuleError
+from lms.domain.models import Role, User
 
 
 def current_user() -> User | None:

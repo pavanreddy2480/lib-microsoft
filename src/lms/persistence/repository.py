@@ -1,4 +1,4 @@
-"""Data access - plain SQL, no business rules.  OWNER: Person 2 (see tasks/2.md).
+"""Data access - plain SQL, no business rules.  OWNER: Person 2 (see docs/team/2.md).
 
 Every function takes an open `conn` as first argument (services pass the
 transaction's connection). Convert rows to the dataclasses in models.py:
@@ -12,7 +12,9 @@ import sqlite3
 from datetime import date
 from typing import Iterable
 
-from .models import Copy, CopyStatus, Event, Request, RequestStatus, Title, User
+from lms.domain.models import (
+    ACTIVE_STATUSES, Copy, CopyStatus, Event, Request, RequestStatus, Role, Title, User,
+)
 
 
 def now_ts() -> str:

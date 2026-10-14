@@ -1,2 +1,3 @@
-streamlit>=1.30
-pytest>=7.0
+# Single source of truth for dependencies is pyproject.toml.
+# This installs the lms package (editable) plus dev tools.
+-e .[dev]

@@ -47,8 +47,8 @@ There is no edit API for requests: dates, title and member are immutable after s
 ## 4. Non-functional requirements
 - **Integrity:** every write runs in one SQLite transaction (`BEGIN IMMEDIATE`). A DB trigger blocks overlapping active commitments even if the application code has a bug.
 - **Usability:** every error is a plain-English `st.error` and never a stack trace. Statuses use the same names everywhere.
-- **Explainability:** small modules, one owner each. The business rules live only in `availability.py` and `services.py`.
-- **Portability:** Python 3.10+, `pip install -r requirements.txt`, `streamlit run app.py`. No external services.
+- **Explainability:** small modules, one owner each. The business rules live only in `availability.py` and `lending.py`.
+- **Portability:** Python 3.10+, `pip install -r requirements.txt`, `python -m streamlit run app/Home.py`. No external lending.
 - **Performance:** fine at hackathon scale (tens of titles, hundreds of requests). SQLite suits a mostly-read, low-concurrency workload.
 - **Testability:** pytest uses a fresh, seeded temporary DB per test.
 

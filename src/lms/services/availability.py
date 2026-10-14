@@ -1,4 +1,4 @@
-"""Availability engine - the heart of rules R2-R5, R10.  OWNER: Person 3 (see tasks/3.md).
+"""Availability engine - the heart of rules R2-R5, R10.  OWNER: Person 3 (see docs/team/3.md).
 
 Availability is computed per PHYSICAL COPY, never from a title-level counter.
 A copy can be allocated for [start, end] iff:
@@ -11,9 +11,17 @@ A copy can be allocated for [start, end] iff:
 from __future__ import annotations
 
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 
-from .models import AvailabilityResult, Copy, Request, TitleAvailability
+from lms.domain.clock import business_today
+from lms.domain.errors import (
+    INVALID_DATES, PERIOD_TOO_LONG, START_IN_PAST, BusinessRuleError,
+)
+from lms.domain.models import (
+    MAX_PERIOD_DAYS, AvailabilityResult, Copy, CopyStatus, Request, RequestStatus,
+    TitleAvailability,
+)
+from lms.persistence import repository as repo
 
 
 def overlaps(s1: date, e1: date, s2: date, e2: date) -> bool:
