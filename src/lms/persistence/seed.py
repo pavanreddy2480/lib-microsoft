@@ -39,17 +39,85 @@ from lms.domain.security import hash_password
 
 def seed(conn: sqlite3.Connection) -> None:
     """Insert the data above into an EMPTY schema."""
-    raise NotImplementedError
+    users = [
+        ("librarian", "lib123", "Library Staff", Role.LIBRARIAN),
+        ("asha", "pass123", "Asha Rao", Role.MEMBER),
+        ("ravi", "pass123", "Ravi Kumar", Role.MEMBER),
+        ("meera", "pass123", "Meera Iyer", Role.MEMBER),
+        ("kiran", "pass123", "Kiran Das", Role.MEMBER),
+    ]
+    user_ids = {
+        username: repo.insert_user(conn, username, hash_password(password), full_name, role.value)
+        for username, password, full_name, role in users
+    }
+
+    title_data = [
+        ("Clean Code", "Software Engineering", ["CC-1", "CC-2", "CC-3", "CC-4"]),
+        ("Introduction to Algorithms", "Algorithms", ["ITA-1", "ITA-2", "ITA-3"]),
+        ("Design Patterns", "Software Design", ["DP-1", "DP-2"]),
+        ("Database System Concepts", "Databases", ["DSC-1", "DSC-2", "DSC-3", "DSC-4", "DSC-5"]),
+        (
+            "Artificial Intelligence: A Modern Approach",
+            "AI",
+            ["AIMA-1", "AIMA-2", "AIMA-3"],
+        ),
+    ]
+    title_ids = {}
+    for title, category, copy_codes in title_data:
+        title_id = repo.insert_title(conn, title, category)
+        title_ids[title] = title_id
+        for copy_code in copy_codes:
+            status = CopyStatus.DAMAGED if copy_code == "DP-2" else CopyStatus.IN_SERVICE
+            repo.insert_copy(conn, title_id, copy_code, status)
+
+    commitments = [
+        ("asha", "Clean Code", "CC-1", date(2026, 7, 21), date(2026, 8, 4), RequestStatus.ISSUED),
+        ("ravi", "Clean Code", "CC-2", date(2026, 7, 21), date(2026, 8, 4), RequestStatus.ISSUED),
+        (
+            "meera", "Introduction to Algorithms", "ITA-1",
+            date(2026, 8, 4), date(2026, 8, 8), RequestStatus.RESERVED,
+        ),
+        (
+            "kiran", "Artificial Intelligence: A Modern Approach", "AIMA-1",
+            date(2026, 7, 21), date(2026, 8, 4), RequestStatus.ISSUED,
+        ),
+        (
+            "asha", "Artificial Intelligence: A Modern Approach", "AIMA-2",
+            date(2026, 8, 6), date(2026, 8, 7), RequestStatus.RESERVED,
+        ),
+    ]
+    copies = {copy.copy_code: copy for copy in repo.list_copies(conn)}
+    for member, title, copy_code, start, end, status in commitments:
+        request_id = repo.insert_request(
+            conn, user_ids[member], title_ids[title], copies[copy_code].id,
+            start, end, status,
+        )
+        repo.insert_event(conn, request_id, None, status.value, "seed")
 
 
 def reset_db() -> None:
     """Drop everything, init schema, seed. Used by the 'Reset demo data' button and tests."""
-    raise NotImplementedError
+    conn = db.get_conn()
+    try:
+        db.drop_all(conn)
+        db.init_db(conn)
+    finally:
+        conn.close()
+    with db.transaction() as conn:
+        seed(conn)
 
 
 def ensure_db() -> None:
     """Init + seed only if the DB has no titles yet (called on app start)."""
-    raise NotImplementedError
+    conn = db.get_conn()
+    try:
+        db.init_db(conn)
+        has_titles = conn.execute("SELECT COUNT(*) FROM titles").fetchone()[0] > 0
+    finally:
+        conn.close()
+    if not has_titles:
+        with db.transaction() as conn:
+            seed(conn)
 
 
 # Run from the project root:  python -m lms.persistence.seed
