@@ -35,14 +35,26 @@ def refused(conn, code, action, text=None):
     assert snapshot(conn) == before
 
 
-def test_clean_code_capacity(conn, asha, ravi, title_id):
+def test_clean_code_capacity(conn, title_id):
+    # asha and ravi already hold CC-1 / CC-2 for these dates, so meera and kiran
+    # take the two free copies (asha/ravi would hit DUPLICATE_REQUEST first).
     tid = title_id("Clean Code")
     start, end = D(2026, 8, 2), D(2026, 8, 3)
-    requests = [lending.submit_request(actor, tid, start, end) for actor in (asha, ravi)]
+    requests = [lending.submit_request(user(conn, name), tid, start, end)
+                for name in ("meera", "kiran")]
     assert len({r.copy_id for r in requests}) == 2
     assert availability.check_availability(conn, tid, start, end).free_count == 0
+
+
+def test_all_copies_committed_refused(conn, asha, ravi, title_id):
+    # Intro to Algorithms 05-07: ITA-1 is reserved (seed), asha and ravi take ITA-2/ITA-3,
+    # kiran (no ITA request) is refused with the "already committed" reason.
+    tid = title_id("Introduction to Algorithms")
+    for actor in (asha, ravi):
+        lending.submit_request(actor, tid, START, END)
+    assert availability.check_availability(conn, tid, START, END).free_count == 0
     refused(conn, errors.NO_COPY_AVAILABLE,
-            lambda: lending.submit_request(user(conn, "meera"), tid, start, end), "already committed")
+            lambda: lending.submit_request(user(conn, "kiran"), tid, START, END), "already committed")
 
 
 def test_design_patterns_capacity(conn, asha, ravi, title_id):
