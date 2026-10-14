@@ -48,7 +48,7 @@ with closing(db.get_conn()) as conn:
           "Note": result.reason or "Available",
         }
       )
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
 
   with st.expander("Copies by title"):
     for title in titles.values():
@@ -91,10 +91,8 @@ with closing(db.get_conn()) as conn:
           selected_title.id,
           start,
           end,
-          success="Request submitted - awaiting librarian review (PENDING).",
         )
         if request is not None:
           st.success(
-            f"Request #{request.id} submitted - "
-            "PENDING - awaiting librarian review."
+            f"Request #{request.id} submitted - awaiting librarian review (PENDING)."
           )
