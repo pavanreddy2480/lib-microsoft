@@ -1,22 +1,21 @@
-"""Home / login page.  OWNER: Person 1 (see docs/team/1.md).
+"""Entry point: login, role-aware navigation, home dashboard.  OWNER: Person 1.
 
 Run from the project root:  python -m streamlit run app/Home.py
 
-Not logged in -> login form (auth.login) + demo credentials.
-Logged in     -> sidebar, role-specific list of pages, lifecycle diagram (PRD §1).
+Navigation is built per role with st.navigation, so the sidebar only lists the
+pages the logged-in user may open (logged out -> Home/login only). Each page
+still guards itself with page_setup(role) in case its URL is opened directly.
 """
-import streamlit as st
-
-from lms.domain.errors import BusinessRuleError
-from lms.domain.models import Role
-from lms.persistence import seed
-from lms.services import auth
 from contextlib import closing
 
+import streamlit as st
+
 from lms.domain import clock
-from lms.domain.models import RequestStatus
-from lms.persistence import db
+from lms.domain.errors import BusinessRuleError
+from lms.domain.models import RequestStatus, Role
+from lms.persistence import db, seed
 from lms.persistence import repository as repo
+from lms.services import auth
 from lms.ui.common import apply_style, current_user, sidebar
 
 st.set_page_config(page_title="Library Management System", page_icon="📚", layout="wide")
@@ -32,21 +31,26 @@ PENDING ──approve──▶ RESERVED ──issue──▶ ISSUED ──return
 Active (holds a copy):     PENDING · RESERVED · ISSUED
 Terminal (copy released):  REJECTED · CANCELLED · RETURNED"""
 
-PAGES = {
+# (file, title, icon, description) per role - the only pages that role sees.
+ROLE_PAGES = {
     Role.MEMBER: [
-        ("Catalog", "check availability for your dates and submit a request"),
-        ("My Requests", "track status and history, cancel a PENDING or RESERVED request"),
+        ("pages/1_Catalog.py", "Catalog", "🔎",
+         "check availability for your dates and submit a request"),
+        ("pages/2_My_Requests.py", "My Requests", "📋",
+         "track status and history, cancel a PENDING or RESERVED request"),
     ],
     Role.LIBRARIAN: [
-        ("Review Queue", "approve or reject PENDING requests (a reason is required to reject)"),
-        ("Loans", "issue confirmed reservations and take returns, recording the copy's condition"),
-        ("Inventory", "change a copy's status and reset the demo data"),
+        ("pages/3_Review_Queue.py", "Review Queue", "📥",
+         "approve or reject PENDING requests (a reason is required to reject)"),
+        ("pages/4_Loans.py", "Loans", "🔁",
+         "issue confirmed reservations and take returns, recording the copy's condition"),
+        ("pages/5_Inventory.py", "Inventory", "🗂️",
+         "change a copy's status and reset the demo data"),
     ],
 }
 
-user = current_user()
 
-if user is None:
+def login_view() -> None:
     _, mid, _ = st.columns([1, 1.4, 1])
     with mid:
         st.title("📚 Library")
@@ -66,7 +70,13 @@ if user is None:
         with st.expander("Demo credentials"):
             st.markdown("Librarian: `librarian` / `lib123`  \n"
                         "Members: `asha`, `ravi`, `meera`, `kiran` / `pass123`")
-else:
+
+
+def home_view() -> None:
+    user = current_user()
+    if user is None:
+        login_view()
+        return
     sidebar()
     today = clock.business_today()
     st.title(f"Welcome, {user.full_name}")
@@ -84,11 +94,19 @@ else:
     c4.metric("Overdue", overdue)
 
     st.markdown("#### Where to go")
-    pages = PAGES[user.role]
-    for col, (name, what) in zip(st.columns(len(pages)), pages):
+    pages = ROLE_PAGES[user.role]
+    for col, (path, title, icon, what) in zip(st.columns(len(pages)), pages):
         with col.container(border=True):
-            st.markdown(f"**{name}**")
+            st.page_link(path, label=f"**{title}**", icon=icon)
             st.caption(what)
 
     with st.expander("How a request moves through the system"):
         st.code(LIFECYCLE, language=None)
+
+
+user = current_user()
+home = st.Page(home_view, title="Home", icon="🏠", default=True)
+pages = [home] if user is None else [home] + [
+    st.Page(path, title=title, icon=icon) for path, title, icon, _ in ROLE_PAGES[user.role]
+]
+st.navigation(pages).run()
