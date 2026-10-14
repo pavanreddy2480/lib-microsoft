@@ -26,14 +26,19 @@ def sidebar() -> None:
     """Logged-in user, business-date override (demo 'time travel'), logout."""
     user = current_user()
     with st.sidebar:
+        st.markdown("### 📚 Library")
         if user:
-            st.markdown(f"**{user.full_name}**  \n`{user.username}` · {user.role.value}")
-            if st.button("Log out"):
-                st.session_state.pop("user", None)
-                st.rerun()
-        st.divider()
+            with st.container(border=True):
+                role_colour = "blue" if user.role == Role.LIBRARIAN else "green"
+                st.markdown(f"**{user.full_name}**  \n"
+                            f"`{user.username}` :{role_colour}-badge[{user.role.value.title()}]")
+                if st.button("Log out", width="stretch"):
+                    st.session_state.pop("user", None)
+                    st.rerun()
         new_today = st.date_input("Business date (today)", value=clock.business_today(),
-                                  help="Simulated 'today' used by every rule. Default 2026-08-01.")
+                                  format="DD/MM/YYYY",
+                                  help="Simulated 'today' used by every rule. Default 2026-08-01. "
+                                       "Move it forward to issue or return books in the demo.")
         if new_today != clock.business_today():
             clock.set_business_today(new_today)
             st.rerun()
