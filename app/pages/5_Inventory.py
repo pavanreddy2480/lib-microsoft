@@ -3,10 +3,12 @@
 Only IN_SERVICE copies can be allocated (BR5). Changing a copy's status reports every
 PENDING/RESERVED commitment that was moved to another copy or closed.
 """
+import html
+
 import streamlit as st
 
 from lms.domain.models import CopyStatus, Role
-from lms.ui.common import page_setup
+from lms.ui.common import html_table, page_setup, status_pill
 from lms.ui.librarian.components import act, flash_affected, show_flash
 from lms.ui.librarian.registry import get_port
 
@@ -15,10 +17,10 @@ port = get_port()
 show_flash()
 copies = port.inventory()
 
-st.dataframe(
-    [{"Title": c.title, "Copy": c.copy_code, "Status": c.status.value, "Note": c.note,
-      "Next commitment": c.commitment or "-"} for c in copies],
-    hide_index=True,
+html_table(
+    ["Title", "Copy", "Status", "Note", "Next commitment"],
+    [[html.escape(c.title), f"<code>{html.escape(c.copy_code)}</code>", status_pill(c.status),
+      html.escape(c.note or ""), html.escape(c.commitment or "-")] for c in copies],
 )
 
 st.subheader("Change copy status")

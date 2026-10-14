@@ -98,6 +98,20 @@ h1 {font-weight: 700;}
   border: 1px solid rgba(128, 128, 128, .25); border-radius: 10px; padding: 12px 16px;
 }
 [data-testid="stMetricValue"] {font-weight: 700;}
+/* Clean tables (html_table): row dividers only, muted header, status pills */
+.lms-table {width: 100%; border-collapse: collapse; font-size: .95rem; margin: .25rem 0 1rem 0;}
+.lms-table th {text-align: left; font-weight: 600; font-size: .78rem; letter-spacing: .04em;
+  text-transform: uppercase; opacity: .6; padding: 8px 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, .35);}
+.lms-table td {padding: 10px; border-bottom: 1px solid rgba(128, 128, 128, .15); vertical-align: middle;}
+.lms-table tr:hover td {background: rgba(128, 128, 128, .06);}
+.lms-table .sub {display: block; font-size: .8rem; opacity: .6;}
+.lms-table code {font-size: .85rem;}
+.lms-pill {display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .78rem;
+  font-weight: 600; white-space: nowrap;}
+.lms-bar {height: 6px; border-radius: 3px; background: rgba(128, 128, 128, .2); width: 110px;
+  display: inline-block; vertical-align: middle; margin-right: 8px; overflow: hidden;}
+.lms-bar > span {display: block; height: 100%; background: #3b82f6;}
 </style>
 """
 
@@ -114,6 +128,36 @@ def status_badge(status) -> str:
     """Markdown badge for a RequestStatus / CopyStatus (or its string value)."""
     value = getattr(status, "value", status)
     return f":{STATUS_COLOURS.get(value, 'gray')}-badge[{value}]"
+
+
+_PILL_RGB = {"green": "34,160,90", "red": "220,53,69", "orange": "217,119,6",
+             "blue": "59,130,246", "violet": "139,92,246", "gray": "120,120,120"}
+
+
+def pill(text: str, colour: str = "gray") -> str:
+    """Small rounded status label (HTML) for html_table cells."""
+    import html
+    rgb = _PILL_RGB.get(colour, _PILL_RGB["gray"])
+    return (f'<span class="lms-pill" style="background: rgba({rgb}, .15); '
+            f'color: rgb({rgb});">{html.escape(text)}</span>')
+
+
+def status_pill(status) -> str:
+    value = getattr(status, "value", status)
+    return pill(value.replace("_", " ").title(), STATUS_COLOURS.get(value, "gray"))
+
+
+def bar(fraction: float) -> str:
+    pct = max(0, min(100, round(fraction * 100)))
+    return f'<span class="lms-bar"><span style="width: {pct}%"></span></span>'
+
+
+def html_table(columns: list[str], rows: list[list[str]]) -> None:
+    """Render a clean table. Cells are HTML: escape plain text with html.escape first."""
+    head = "".join(f"<th>{c}</th>" for c in columns)
+    body = "".join("<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>" for row in rows)
+    st.markdown(f'<table class="lms-table"><thead><tr>{head}</tr></thead>'
+                f"<tbody>{body}</tbody></table>", unsafe_allow_html=True)
 
 
 def apply_style() -> None:

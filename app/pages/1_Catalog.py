@@ -4,6 +4,7 @@ Left: copy-level availability of every title for the chosen period (BR2).
 Right: request panel - availability check with the reason (BR10), then submit.
 The service makes every decision; the page only shows the result (BR4).
 """
+import html
 from contextlib import closing
 from datetime import timedelta
 
@@ -15,7 +16,7 @@ from lms.domain.models import Role
 from lms.persistence import db
 from lms.persistence import repository as repo
 from lms.services import availability, lending
-from lms.ui.common import fmt_date, page_setup, run_action, status_badge
+from lms.ui.common import bar, fmt_date, html_table, page_setup, pill, run_action, status_badge
 
 user = page_setup("Catalog", Role.MEMBER)
 today = clock.business_today()
@@ -43,20 +44,18 @@ with closing(db.get_conn()) as conn:
     with left:
         st.subheader("Availability")
         st.caption(f"Free copies for the whole period {period}")
+        rows = []
         for item in catalog:
             res = item.result
-            with st.container(border=True):
-                name, bar, state = st.columns([5, 3, 2], vertical_alignment="center")
-                name.markdown(f"**{item.title.title}**")
-                name.caption(item.title.category)
-                bar.progress(res.free_count / res.total_copies if res.total_copies else 0.0,
-                             text=f"{res.free_count} of {res.total_copies} free")
-                if res.available:
-                    state.markdown(":green-badge[Available]")
-                else:
-                    state.markdown(":red-badge[Unavailable]")
-                if res.total_in_service < res.total_copies:
-                    name.caption(f"{res.total_copies - res.total_in_service} copy out of service")
+            out = res.total_copies - res.total_in_service
+            name = f"<b>{html.escape(item.title.title)}</b>"
+            name += f'<span class="sub">{html.escape(item.title.category)}'
+            name += f" · {out} out of service</span>" if out else "</span>"
+            free = bar(res.free_count / res.total_copies if res.total_copies else 0)
+            free += f"{res.free_count} of {res.total_copies}"
+            state = pill("Available", "green") if res.available else pill("Unavailable", "red")
+            rows.append([name, free, state])
+        html_table(["Title", "Free for period", "Status"], rows)
         with st.expander("Copies by title"):
             for title in titles.values():
                 badges = " ".join(

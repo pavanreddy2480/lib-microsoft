@@ -148,9 +148,11 @@ def test_all_requests_tab_filters_and_shows_history(fake_port, librarian_user):
 # ---------------- inventory ----------------
 def test_inventory_table_lists_all_copies(fake_port, librarian_user):
     at = run_page("5_Inventory.py", librarian_user)
-    table = at.dataframe[0].value
-    assert len(table) == 17
-    assert table.loc[table["Copy"] == "DP-2", "Status"].iloc[0] == "DAMAGED"
+    table = next(m.value for m in at.markdown if 'class="lms-table"' in m.value)
+    rows = table.split("<tbody>")[1].split("<tr>")[1:]
+    assert len(rows) == 17
+    dp2 = next(r for r in rows if "<code>DP-2</code>" in r)
+    assert "Damaged" in dp2
 
 
 def test_marking_the_only_lendable_copy_unavailable_closes_its_request(fake_port, librarian_user):
