@@ -3,6 +3,8 @@
 A Streamlit + SQLite prototype of a university library lending lifecycle:
 **request → review → confirmed reservation → loan → return**, with copy-level availability that never double-books a physical copy.
 
+> **New to the project? Read [docs/CONTEXT.md](docs/CONTEXT.md) first.**
+>
 > Status: the interface contract and the task split are done; implementation is in progress. Person 1 completes this README (see [docs/team/1.md](docs/team/1.md)).
 
 ## Setup (everyone, once)
@@ -83,4 +85,4 @@ from lms.ui.common import page_setup, run_action           # app/ pages only
 - `.gitattributes` normalises line endings to LF, so Windows editors don't create whole-file diffs.
 
 ## Docs
-[Problem statement](docs/problem-statement.pdf) · [BRD](docs/BRD.md) · [PRD](docs/PRD.md) · [Team tasks](docs/team/)
+**[Start here: CONTEXT](docs/CONTEXT.md)** · [Problem statement](docs/problem-statement.pdf) · [BRD](docs/BRD.md) · [PRD](docs/PRD.md) · [Team tasks](docs/team/)
