@@ -18,9 +18,19 @@ def login(username: str, password: str) -> User:
     Raises BusinessRuleError(LOGIN_FAILED, "Invalid username or password.")
     on unknown user OR wrong password (same message for both).
     """
-    raise NotImplementedError
+    with closing(db.get_conn()) as conn:
+        found = repo.get_user_by_username(conn, (username or "").strip())
+    if found is None:
+        raise BusinessRuleError(LOGIN_FAILED, "Invalid username or password.")
+    user, stored_hash = found
+    if hash_password(password or "") != stored_hash:
+        raise BusinessRuleError(LOGIN_FAILED, "Invalid username or password.")
+    return user
 
 
 def require_role(user: User | None, role: Role) -> None:
     """Raise BusinessRuleError(NOT_AUTHORIZED, ...) if user is None or has another role."""
-    raise NotImplementedError
+    if user is None or user.role != role:
+        raise BusinessRuleError(
+            NOT_AUTHORIZED, f"This action requires the {role.value} role."
+        )
