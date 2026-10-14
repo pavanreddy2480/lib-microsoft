@@ -16,7 +16,7 @@ from lms.domain.models import RequestStatus, Role
 from lms.persistence import db, seed
 from lms.persistence import repository as repo
 from lms.services import auth
-from lms.ui.common import apply_style, current_user, sidebar
+from lms.ui.common import apply_style, banner, current_user, sidebar
 
 st.set_page_config(page_title="Library Management System", page_icon="📚", layout="wide")
 apply_style()
@@ -80,7 +80,12 @@ def home_view() -> None:
     sidebar()
     today = clock.business_today()
     st.title(f"Welcome, {user.full_name}")
-    st.caption(f"{user.role.value.title()} · business date {today:%d %b %Y}")
+    if user.role == Role.LIBRARIAN:
+        banner("Circulation desk", f"Business date {today:%d %b %Y} · review requests, "
+                                   "issue books and take returns.")
+    else:
+        banner("Find a book, hold a copy", f"Business date {today:%d %b %Y} · every request "
+                                           "reserves a specific physical copy for your dates.")
 
     with closing(db.get_conn()) as conn:
         member_id = None if user.role == Role.LIBRARIAN else user.id

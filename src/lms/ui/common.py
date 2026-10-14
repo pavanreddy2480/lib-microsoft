@@ -47,8 +47,59 @@ def sidebar() -> None:
 _CSS = """
 <style>
 .block-container {padding-top: 2rem; max-width: 1200px;}
-[data-testid="stVerticalBlockBorderWrapper"] {border-radius: 10px;}
-h1 {font-weight: 700;}
+
+/* Titles: indigo -> violet -> pink gradient text */
+h1 {
+  font-weight: 800 !important;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed 55%, #db2777);
+  -webkit-background-clip: text; background-clip: text; color: transparent !important;
+}
+h3, h4 {color: #3730a3;}
+
+/* Sidebar: soft indigo gradient */
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #eef2ff 0%, #f5f3ff 55%, #fdf2f8 100%);
+}
+
+/* Bordered containers become lifted cards */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  border-radius: 14px; background: #ffffff;
+  box-shadow: 0 1px 3px rgba(30, 27, 75, .06), 0 6px 18px rgba(79, 70, 229, .06);
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
+  box-shadow: 0 2px 6px rgba(30, 27, 75, .08), 0 10px 26px rgba(79, 70, 229, .12);
+}
+
+/* Metric tiles: one colour each (pending, reserved, on loan, overdue) */
+[data-testid="stMetric"] {
+  background: #ffffff; border-radius: 14px; padding: 14px 18px;
+  border-left: 6px solid #6366f1; box-shadow: 0 4px 14px rgba(79, 70, 229, .08);
+}
+[data-testid="stColumn"]:nth-of-type(1) [data-testid="stMetric"] {border-left-color: #f59e0b;}
+[data-testid="stColumn"]:nth-of-type(2) [data-testid="stMetric"] {border-left-color: #3b82f6;}
+[data-testid="stColumn"]:nth-of-type(3) [data-testid="stMetric"] {border-left-color: #8b5cf6;}
+[data-testid="stColumn"]:nth-of-type(4) [data-testid="stMetric"] {border-left-color: #ef4444;}
+[data-testid="stMetricValue"] {font-weight: 800; color: #1e1b4b;}
+
+/* Primary buttons: gradient */
+button[kind="primary"], button[kind="primaryFormSubmit"] {
+  background: linear-gradient(90deg, #4f46e5, #7c3aed) !important;
+  border: none !important; color: #fff !important;
+}
+button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover {filter: brightness(1.08);}
+
+/* Tables and expanders: rounded */
+[data-testid="stDataFrame"], [data-testid="stExpander"] {border-radius: 12px; overflow: hidden;}
+
+/* Coloured banner used on Home */
+.lms-banner {
+  padding: 22px 26px; border-radius: 16px; color: #fff; margin-bottom: 1rem;
+  background: linear-gradient(120deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  box-shadow: 0 10px 30px rgba(124, 58, 237, .25);
+}
+.lms-banner h2 {color: #fff; margin: 0 0 4px 0; font-weight: 800;}
+.lms-banner p {margin: 0; opacity: .92;}
 </style>
 """
 
@@ -69,6 +120,13 @@ def status_badge(status) -> str:
 
 def apply_style() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
+
+
+def banner(title: str, subtitle: str = "") -> None:
+    """Coloured gradient banner (plain text only: escaped)."""
+    import html
+    st.markdown(f'<div class="lms-banner"><h2>{html.escape(title)}</h2>'
+                f'<p>{html.escape(subtitle)}</p></div>', unsafe_allow_html=True)
 
 
 def page_setup(title: str, role: Role | None = None) -> User:
