@@ -11,9 +11,16 @@ from lms.domain.errors import BusinessRuleError
 from lms.domain.models import Role
 from lms.persistence import seed
 from lms.services import auth
-from lms.ui.common import current_user, sidebar
+from contextlib import closing
 
-st.set_page_config(page_title="Library Management System", layout="wide")
+from lms.domain import clock
+from lms.domain.models import RequestStatus
+from lms.persistence import db
+from lms.persistence import repository as repo
+from lms.ui.common import apply_style, current_user, sidebar
+
+st.set_page_config(page_title="Library Management System", page_icon="📚", layout="wide")
+apply_style()
 seed.ensure_db()
 
 LIFECYCLE = """\
@@ -37,31 +44,51 @@ PAGES = {
     ],
 }
 
-st.title("Library Management System")
 user = current_user()
 
 if user is None:
-    st.caption("Request → review → confirmed reservation → loan → return, with copy-level availability.")
-    with st.form("login"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Log in")
-    if submitted:
-        try:
-            st.session_state["user"] = auth.login(username.strip(), password)
-        except BusinessRuleError as err:
-            st.error(err.message)
-        else:
-            st.rerun()
-    st.info(
-        "**Demo credentials**  \n"
-        "Librarian: `librarian` / `lib123`  \n"
-        "Members: `asha`, `ravi`, `meera`, `kiran` / `pass123`"
-    )
+    _, mid, _ = st.columns([1, 1.4, 1])
+    with mid:
+        st.title("📚 Library")
+        st.caption("Request → review → reservation → loan → return, "
+                   "with copy-level availability.")
+        with st.form("login", border=True):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Log in", type="primary")
+        if submitted:
+            try:
+                st.session_state["user"] = auth.login(username.strip(), password)
+            except BusinessRuleError as err:
+                st.error(err.message)
+            else:
+                st.rerun()
+        with st.expander("Demo credentials"):
+            st.markdown("Librarian: `librarian` / `lib123`  \n"
+                        "Members: `asha`, `ravi`, `meera`, `kiran` / `pass123`")
 else:
     sidebar()
-    st.subheader(f"Welcome, {user.full_name}")
-    st.write(f"You are logged in as a **{user.role.value}**. Use the sidebar to open a page:")
-    st.markdown("\n".join(f"- **{name}**: {what}" for name, what in PAGES[user.role]))
-    st.markdown("#### Request lifecycle")
-    st.code(LIFECYCLE, language=None)
+    today = clock.business_today()
+    st.title(f"Welcome, {user.full_name}")
+    st.caption(f"{user.role.value.title()} · business date {today:%d %b %Y}")
+
+    with closing(db.get_conn()) as conn:
+        member_id = None if user.role == Role.LIBRARIAN else user.id
+        reqs = repo.list_requests(conn, member_id=member_id)
+    count = lambda status: sum(r.status == status for r in reqs)
+    overdue = sum(r.status == RequestStatus.ISSUED and r.end_date < today for r in reqs)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Pending review", count(RequestStatus.PENDING))
+    c2.metric("Reserved", count(RequestStatus.RESERVED))
+    c3.metric("On loan", count(RequestStatus.ISSUED))
+    c4.metric("Overdue", overdue)
+
+    st.markdown("#### Where to go")
+    pages = PAGES[user.role]
+    for col, (name, what) in zip(st.columns(len(pages)), pages):
+        with col.container(border=True):
+            st.markdown(f"**{name}**")
+            st.caption(what)
+
+    with st.expander("How a request moves through the system"):
+        st.code(LIFECYCLE, language=None)

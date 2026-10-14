@@ -39,9 +39,37 @@ def sidebar() -> None:
             st.rerun()
 
 
+_CSS = """
+<style>
+.block-container {padding-top: 2rem; max-width: 1200px;}
+[data-testid="stVerticalBlockBorderWrapper"] {border-radius: 10px;}
+h1 {font-weight: 700;}
+</style>
+"""
+
+# One colour per status, used everywhere a status is shown.
+STATUS_COLOURS = {
+    "PENDING": "orange", "RESERVED": "blue", "ISSUED": "violet",
+    "RETURNED": "green", "REJECTED": "red", "CANCELLED": "gray", "OVERDUE": "red",
+    "IN_SERVICE": "green", "DAMAGED": "red", "UNDER_REPAIR": "orange",
+    "LOST": "red", "REFERENCE_ONLY": "gray", "RESTRICTED": "gray",
+}
+
+
+def status_badge(status) -> str:
+    """Markdown badge for a RequestStatus / CopyStatus (or its string value)."""
+    value = getattr(status, "value", status)
+    return f":{STATUS_COLOURS.get(value, 'gray')}-badge[{value}]"
+
+
+def apply_style() -> None:
+    st.markdown(_CSS, unsafe_allow_html=True)
+
+
 def page_setup(title: str, role: Role | None = None) -> User:
     """Set title, draw sidebar, stop the page unless the right user is logged in."""
-    st.set_page_config(page_title=f"LMS · {title}", layout="wide")
+    st.set_page_config(page_title=f"LMS · {title}", page_icon="📚", layout="wide")
+    apply_style()
     sidebar()
     user = current_user()
     if user is None:
@@ -51,6 +79,8 @@ def page_setup(title: str, role: Role | None = None) -> User:
         st.error(f"This page is for {role.value.lower()}s only.")
         st.stop()
     st.title(title)
+    st.caption(f"Signed in as **{user.full_name}** · {user.role.value.title()} · "
+               f"business date {fmt_date(clock.business_today())}")
     return user
 
 

@@ -45,7 +45,8 @@ with closing(db.get_conn()) as conn:
           "Total": result.total_copies,
           "In service": result.total_in_service,
           "Free for period": result.free_count,
-          "Note": result.reason or "Available",
+          "Availability": ("✅ Available" if result.available else "❌ Not available"),
+          "Note": result.reason,
         }
       )
     st.dataframe(rows, width="stretch", hide_index=True)
