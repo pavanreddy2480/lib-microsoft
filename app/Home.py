@@ -16,7 +16,7 @@ from lms.domain.models import RequestStatus, Role
 from lms.persistence import db, seed
 from lms.persistence import repository as repo
 from lms.services import auth
-from lms.ui.common import apply_style, current_user, sidebar
+from lms.ui.common import apply_style, current_user, remember_login, restore_login, sidebar
 
 st.set_page_config(page_title="Library Management System", page_icon="📚", layout="wide")
 apply_style()
@@ -62,7 +62,7 @@ def login_view() -> None:
             submitted = st.form_submit_button("Log in", type="primary")
         if submitted:
             try:
-                st.session_state["user"] = auth.login(username.strip(), password)
+                remember_login(auth.login(username.strip(), password))
             except BusinessRuleError as err:
                 st.error(err.message)
             else:
@@ -104,6 +104,7 @@ def home_view() -> None:
         st.code(LIFECYCLE, language=None)
 
 
+restore_login()
 user = current_user()
 home = st.Page(home_view, title="Home", icon="🏠", default=True)
 pages = [home] if user is None else [home] + [

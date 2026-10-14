@@ -9,6 +9,8 @@ clearly (st.error) instead of crashing.
 """
 from __future__ import annotations
 
+import secrets
+from contextlib import closing
 from datetime import date
 
 import streamlit as st
@@ -18,8 +20,50 @@ from lms.domain.errors import BusinessRuleError
 from lms.domain.models import Role, User
 
 
+# Login survives a browser refresh: token -> user id, kept in server memory and
+# echoed in the URL (?s=...). Demo-grade: anyone with the URL is logged in, and a
+# server restart logs everyone out.
+_SESSIONS: dict[str, int] = {}
+_PARAM = "s"
+
+
 def current_user() -> User | None:
     return st.session_state.get("user")
+
+
+def remember_login(user: User) -> None:
+    """Call right after a successful login."""
+    token = secrets.token_urlsafe(16)
+    _SESSIONS[token] = user.id
+    st.session_state["user"] = user
+    st.session_state["_token"] = token
+    st.query_params[_PARAM] = token
+
+
+def restore_login() -> None:
+    """Re-attach the user after a refresh and keep the token in the URL across pages."""
+    token = st.session_state.get("_token")
+    if current_user() is not None and token:
+        if st.query_params.get(_PARAM) != token:
+            st.query_params[_PARAM] = token
+        return
+    token = st.query_params.get(_PARAM)
+    user_id = _SESSIONS.get(token) if token else None
+    if user_id is None:
+        return
+    from lms.persistence import db
+    from lms.persistence import repository as repo
+    with closing(db.get_conn()) as conn:
+        user = repo.get_user(conn, user_id)
+    if user is not None:
+        st.session_state["user"] = user
+        st.session_state["_token"] = token
+
+
+def forget_login() -> None:
+    _SESSIONS.pop(st.session_state.pop("_token", None), None)
+    st.session_state.pop("user", None)
+    st.query_params.pop(_PARAM, None)
 
 
 def sidebar() -> None:
@@ -33,13 +77,12 @@ def sidebar() -> None:
                 st.markdown(f"**{user.full_name}**  \n"
                             f"`{user.username}` :{role_colour}-badge[{user.role.value.title()}]")
                 if st.button("Log out", width="stretch"):
-                    st.session_state.pop("user", None)
+                    forget_login()
                     st.rerun()
         new_today = st.date_input("Business date (today)", value=clock.business_today(),
                                   format="DD/MM/YYYY",
                                   help="Simulated 'today' used by every rule. Default 2026-08-01. "
                                        "Move it forward to issue or return books in the demo.")
-        st.caption("🌙 Night mode: menu ⋮ (top right) → Settings → theme.")
         if new_today != clock.business_today():
             clock.set_business_today(new_today)
             st.rerun()
@@ -81,6 +124,7 @@ def page_setup(title: str, role: Role | None = None) -> User:
     """Set title, draw sidebar, stop the page unless the right user is logged in."""
     st.set_page_config(page_title=f"LMS · {title}", page_icon="📚", layout="wide")
     apply_style()
+    restore_login()
     sidebar()
     user = current_user()
     if user is None:

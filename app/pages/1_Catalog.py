@@ -43,26 +43,20 @@ with closing(db.get_conn()) as conn:
     with left:
         st.subheader("Availability")
         st.caption(f"Free copies for the whole period {period}")
-        st.dataframe(
-            [
-                {
-                    "Title": item.title.title,
-                    "Category": item.title.category,
-                    "Free": item.result.free_count,
-                    "In service": item.result.total_in_service,
-                    "Total": item.result.total_copies,
-                    "Status": "✅ Available" if item.result.available else "❌ Unavailable",
-                }
-                for item in catalog
-            ],
-            hide_index=True,
-            width="stretch",
-            column_config={
-                "Title": st.column_config.TextColumn(width="large"),
-                "Free": st.column_config.NumberColumn(help="Copies free for the whole period"),
-                "In service": st.column_config.NumberColumn(help="Copies that can be lent at all"),
-            },
-        )
+        for item in catalog:
+            res = item.result
+            with st.container(border=True):
+                name, bar, state = st.columns([5, 3, 2], vertical_alignment="center")
+                name.markdown(f"**{item.title.title}**")
+                name.caption(item.title.category)
+                bar.progress(res.free_count / res.total_copies if res.total_copies else 0.0,
+                             text=f"{res.free_count} of {res.total_copies} free")
+                if res.available:
+                    state.markdown(":green-badge[Available]")
+                else:
+                    state.markdown(":red-badge[Unavailable]")
+                if res.total_in_service < res.total_copies:
+                    name.caption(f"{res.total_copies - res.total_in_service} copy out of service")
         with st.expander("Copies by title"):
             for title in titles.values():
                 badges = " ".join(
