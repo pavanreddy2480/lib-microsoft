@@ -1,6 +1,15 @@
+# Light and dark palettes: users switch with the app menu (top right) -> Settings -> theme.
 [theme]
-primaryColor = "#6366f1"
-backgroundColor = "#fbfbff"
-secondaryBackgroundColor = "#eef0fb"
-textColor = "#1e1b4b"
 font = "sans serif"
+
+[theme.light]
+primaryColor = "#3b5bdb"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f5f7"
+textColor = "#1f2328"
+
+[theme.dark]
+primaryColor = "#7b93ff"
+backgroundColor = "#111318"
+secondaryBackgroundColor = "#1b1e25"
+textColor = "#e6e8eb"
