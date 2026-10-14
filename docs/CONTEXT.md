@@ -15,7 +15,7 @@ This is the one-page briefing for every team member, and for any AI assistant (C
 ### How we are scored (from the PDF)
 | Criterion | Weight | What it means for us |
 |---|---|---|
-| Problem understanding | 20% | Stakeholders, workflows, rules and scope: see [BRD.md](BRD.md) |
+| Problem understanding | 20% | Stakeholders, workflows, rules and scope: see [docs 01-05](README.md) |
 | Implementation & completeness | 20% | Working flows, clean structure, code we can explain |
 | AI usage | 20% | We direct, question and validate the AI. We don't blindly paste. |
 | Collaboration & communication | 20% | Visible git history per person, plus the 2-slide pitch |
@@ -140,8 +140,8 @@ src/lms/services/availability.py, persistence/seed.py   P3
 src/lms/services/lending.py         P4
 src/lms/ui/common.py                contract (P1 approves changes)
 tests/*                             P7
-docs/BRD.md, PRD.md, ASSUMPTIONS.md, PITCH.md           P1
-docs/ARCHITECTURE.md, TEST_EVIDENCE.md                  P7
+docs/01-06, 08, 09, 12, 13 (problem → PRD, plan, log, pitch)  P1
+docs/07, 10, 11 (architecture, edge cases, test evidence)   P7
 ```
 | # | Role | Your instructions |
 |---|---|---|
@@ -158,7 +158,7 @@ docs/ARCHITECTURE.md, TEST_EVIDENCE.md                  P7
 ---
 
 ## 7. Current status
-- ✅ The interfaces are done: state model, schema with a tested overlap trigger, error codes, business date, paths, UI helpers, test fixtures, BRD/PRD drafts, and the team task files.
+- ✅ The interfaces are done: state model, schema with a tested overlap trigger, error codes, business date, paths, UI helpers, test fixtures, the numbered stage docs (01-12, see [README.md](README.md)), and the team task files.
 - ✅ The app starts. Every page loads and shows the login guard.
 - ⏳ **Everything else is a stub** (`raise NotImplementedError`). That is your work.
 - ⏳ No tests exist yet (P7 writes them first, against the contract).
@@ -236,7 +236,7 @@ from lms.ui.common import page_setup, run_action          # pages only
 
 **Demo script:**
 1. **Happy path:** asha requests *Database System Concepts* → the librarian approves → the business date moves to the start date → issue → return → the copy is free again.
-2. **Conflict:** two members take the 2 free *Clean Code* copies for 2–3 Aug. A third request is refused with a clear reason.
+2. **Conflict:** meera books *Design Patterns* (only DP-1 can be lent) for 5–10 Aug. ravi then asks for 7–8 Aug and is refused: "… already committed … next free from 11 Aug 2026". Also, asha asking for *Clean Code* 2–3 Aug is refused with `DUPLICATE_REQUEST`, because she already holds CC-1.
 3. **Failure handling:** a loan is returned as DAMAGED while that copy has a future reservation. The reservation moves to another copy, or is cancelled with a reason, and the librarian sees which.
 4. **Validation:** a past start date, a 31-day period, or end before start each show a clear error.
 
@@ -254,4 +254,4 @@ from lms.ui.common import page_setup, run_action          # pages only
 | Business date | The simulated "today" used by every rule |
 | Contract file | A shared file everyone codes against; changes need P1's approval |
 
-**Further reading:** [README](../README.md) (setup + layout) · [BRD](BRD.md) (stakeholders, rules, assumptions) · [PRD](PRD.md) (requirements, restrictions, NFRs, acceptance) · [team/](team/) (your tasks)
+**Further reading:** [README](../README.md) (setup + layout) · [Docs index](README.md) · [Business rules](03-business-rules.md) · [PRD](06-prd.md) · [Architecture](07-architecture.md) · [Edge cases](10-edge-cases.md) · [team/](team/) (your tasks)

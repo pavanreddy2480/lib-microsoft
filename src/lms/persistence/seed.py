@@ -11,7 +11,7 @@ Preserve the PDF's meaning exactly (business date defaults to 2026-08-01):
 | Artificial Intelligence: A Modern Approach (AI)    | 3      | AIMA-1 ISSUED 2026-07-21 -> 2026-08-04;               |
 |                                                    |        | AIMA-2 RESERVED 2026-08-06 -> 2026-08-07 (different copy) |
 
-Assumptions (documented in docs/ASSUMPTIONS.md): issue start dates are not in the
+Assumptions (documented in docs/04-assumptions-and-scope.md, A10): issue start dates are not in the
 PDF -> reconstructed as 14 days before the due date; "1 issued + 1 reserved" means
 two different copies.
 
